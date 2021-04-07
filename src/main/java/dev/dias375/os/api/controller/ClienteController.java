@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.dias375.os.domain.model.Cliente;
 import dev.dias375.os.domain.repository.ClienteRepository;
+import dev.dias375.os.domain.service.CadastroClienteService;
 
 @RestController
 @RequestMapping("/clientes")
@@ -31,6 +33,9 @@ public class ClienteController {
 
 	@Autowired
 	private ClienteRepository clienteRepository;
+
+	@Autowired
+	private CadastroClienteService cadastroCliente;
 
 	@GetMapping
 	public List<Cliente> listar() {
@@ -49,18 +54,18 @@ public class ClienteController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public Cliente adicionar(@RequestBody Cliente cliente) {
-		return clienteRepository.save(cliente);
+	public Cliente adicionar(@Valid @RequestBody Cliente cliente) {
+		return cadastroCliente.salvar(cliente);
 	}
 
 	@PutMapping("/{clienteId}")
-	public ResponseEntity<Cliente> atualizar(@PathVariable long clienteId, @RequestBody Cliente cliente) {
+	public ResponseEntity<Cliente> atualizar(@Valid @PathVariable long clienteId, @RequestBody Cliente cliente) {
 
 		if (!clienteRepository.existsById(clienteId)) {
 			return ResponseEntity.notFound().build();
 		}
 		cliente.setId(clienteId);
-		clienteRepository.save(cliente);
+		cliente = cadastroCliente.salvar(cliente);
 
 		return ResponseEntity.ok(cliente);
 	}
@@ -70,7 +75,7 @@ public class ClienteController {
 		if (!clienteRepository.existsById(clienteId)) {
 			return ResponseEntity.notFound().build();
 		}
-		clienteRepository.deleteById(clienteId);
+		cadastroCliente.excluir(clienteId);
 		return ResponseEntity.noContent().build();
 	}
 }
