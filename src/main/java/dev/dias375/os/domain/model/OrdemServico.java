@@ -2,6 +2,8 @@ package dev.dias375.os.domain.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -10,6 +12,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -20,7 +23,9 @@ import javax.validation.groups.Default;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
+import dev.dias375.os.api.model.Comentario;
 import dev.dias375.os.domain.ValidationGroups;
+import dev.dias375.os.domain.exception.DomainException;
 
 @Entity
 public class OrdemServico {
@@ -51,6 +56,17 @@ public class OrdemServico {
 
 	@JsonProperty(access = Access.READ_ONLY)
 	private LocalDateTime dataFinalizacao;
+
+	@OneToMany(mappedBy = "ordemServico")
+	private List<Comentario> comentarios = new ArrayList<>();
+
+	public List<Comentario> getComentarios() {
+		return comentarios;
+	}
+
+	public void setComentarios(List<Comentario> comentarios) {
+		this.comentarios = comentarios;
+	}
 
 	public Long getId() {
 		return id;
@@ -131,6 +147,20 @@ public class OrdemServico {
 		} else if (!id.equals(other.id))
 			return false;
 		return true;
+	}
+
+	public boolean podeSerFinalizada() {
+		return StatusOrdemServico.ABERTA.equals(getStatus());
+	}
+
+	public void finalizar() {
+		if (!podeSerFinalizada()) {
+			throw new DomainException("Ordem de serviço não pode ser finalizada");
+		}
+
+		setStatus(StatusOrdemServico.FINALIZADA);
+		setDataFinalizacao(LocalDateTime.now());
+
 	}
 
 }
